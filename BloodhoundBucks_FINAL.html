@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloodhound Bucks — Johnsburg Elementary</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;color:#1a1a1a;background:#f5f5f3;min-height:100vh}
+.app{max-width:780px;margin:0 auto;padding:1.5rem 1rem}
+.tab-bar{display:flex;gap:6px;border-bottom:1px solid #e0e0d8;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab{padding:8px 14px;border:none;background:none;cursor:pointer;font-size:14px;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+.tab.active{color:#1a1a1a;border-bottom:2px solid #534AB7;font-weight:500}
+.tab:hover:not(.active){color:#1a1a1a}
+.card{background:#fff;border:1px solid #e8e8e0;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+input,select{width:100%;padding:8px 10px;border:1px solid #d0d0c8;border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;font-family:inherit}
+input:focus,select:focus{outline:2px solid #7F77DD;outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid #d0d0c8;border-radius:8px;background:#fff;color:#1a1a1a;cursor:pointer;font-size:14px;font-family:inherit;transition:background 0.15s}
+.btn:hover{background:#f0f0e8}
+.btn.primary{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn.primary:hover{background:#3C3489}
+.btn.danger{background:#fff0f0;color:#991f1f;border-color:#f7c1c1}
+.btn.danger:hover{background:#fce8e8}
+.btn.sm{padding:5px 10px;font-size:13px}
+.buck-btns{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.buck-btn{padding:8px 18px;border:1px solid #d0d0c8;border-radius:8px;background:#f5f5f3;cursor:pointer;font-size:15px;font-weight:500;font-family:inherit;color:#1a1a1a;transition:all 0.15s}
+.buck-btn:hover,.buck-btn.sel{background:#534AB7;color:#fff;border-color:#534AB7}
+.student-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e8e8e0}
+.student-row:last-child{border-bottom:none}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-green{background:#EAF3DE;color:#27500A}
+.badge-amber{background:#FAEEDA;color:#633806}
+.badge-red{background:#FCEBEB;color:#791F1F}
+.badge-purple{background:#EEEDFE;color:#3C3489}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.metric{background:#f5f5f3;border-radius:8px;padding:1rem;text-align:center}
+.metric-val{font-size:26px;font-weight:500}
+.metric-lbl{font-size:12px;color:#666;margin-top:2px}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:999}
+.alert-box{background:#fff;border-radius:12px;padding:1.5rem;max-width:340px;width:90%;border:1px solid #d0d0c8}
+.hidden{display:none!important}
+.success-toast{background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
+.error-toast{background:#FCEBEB;color:#791F1F;border:1px solid #F7C1C1;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
+.search-results{margin-top:8px;max-height:200px;overflow-y:auto;border:1px solid #e8e8e0;border-radius:8px}
+.search-item{padding:10px 12px;cursor:pointer;font-size:14px;border-bottom:1px solid #e8e8e0;display:flex;justify-content:space-between;align-items:center}
+.search-item:last-child{border-bottom:none}
+.search-item:hover{background:#f5f5f3}
+.selected-student{background:#f5f5f3;border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.log-row{display:grid;grid-template-columns:110px 1fr 90px 70px 70px;gap:8px;padding:8px 0;border-bottom:1px solid #e8e8e0;font-size:13px;align-items:center}
+.log-row:last-child{border-bottom:none}
+.log-header{font-weight:500;color:#666;font-size:12px}
+.section-title{font-size:16px;font-weight:500;margin-bottom:1rem}
+.filter-row{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.filter-row input,.filter-row select{width:auto;flex:1;min-width:130px}
+.lock-screen{text-align:center;padding:2rem 1rem}
+.lock-icon{font-size:48px;color:#999;margin-bottom:1rem}
+.required-star{color:#c0392b}
+.mode-toggle{display:flex;gap:8px;margin-bottom:1.25rem}
+.mode-btn{flex:1;padding:10px;border:1px solid #d0d0c8;border-radius:8px;background:#f5f5f3;cursor:pointer;font-size:14px;font-family:inherit;color:#666;text-align:center;transition:all 0.15s}
+.mode-btn.active{background:#534AB7;color:#fff;border-color:#534AB7;font-weight:500}
+.class-student-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid #e8e8e0;font-size:14px}
+.class-student-row:last-child{border-bottom:none}
+.class-student-row:hover{background:#f5f5f3}
+.class-student-row input[type=checkbox]{width:16px;height:16px;flex-shrink:0;cursor:pointer;accent-color:#534AB7}
+.class-checklist{border:1px solid #e8e8e0;border-radius:8px;max-height:280px;overflow-y:auto;margin-bottom:12px}
+.select-all-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #d0d0c8;background:#f5f5f3;border-radius:8px 8px 0 0}
+.confirm-banner{background:#EEEDFE;border:1px solid #AFA9EC;border-radius:8px;padding:10px 14px;font-size:13px;color:#3C3489;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.connect-card{background:#E6F1FB;border:1px solid #85B7EB;border-radius:12px;padding:1.25rem;margin-bottom:1.25rem}
+.connected-pill{display:inline-flex;align-items:center;gap:5px;background:#EAF3DE;color:#27500A;border:1px solid #C0DD97;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #AFA9EC;border-top-color:#534AB7;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:500px){.metrics-grid{grid-template-columns:1fr 1fr}.row3{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+    <div style="width:40px;height:40px;border-radius:50%;background:#534AB7;display:flex;align-items:center;justify-content:center">
+      <i class="ti ti-paw" style="font-size:22px;color:#fff"></i>
+    </div>
+    <div style="flex:1">
+      <h1 style="font-size:20px;font-weight:500">Bloodhound Bucks</h1>
+      <p style="font-size:12px;color:#666">Johnsburg Elementary School</p>
+    </div>
+    <div id="connection-status"></div>
+  </div>
+
+  <div class="connect-card" id="connect-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <p style="font-size:14px;font-weight:500"><i class="ti ti-link"></i> Google Sheets connection</p>
+      <span id="connect-pill"></span>
+    </div>
+    <p id="connect-instructions" style="font-size:13px;color:#555;margin-bottom:10px">Paste your Apps Script Web App URL below to sync data across all devices.</p>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/..." style="flex:1;font-size:13px">
+      <button class="btn primary" onclick="connectSheet()" id="connect-btn" style="white-space:nowrap"><i class="ti ti-plug"></i> Connect</button>
+    </div>
+    <p id="connect-error" class="hidden" style="font-size:12px;color:#991f1f;margin-top:6px"></p>
+    <p id="connect-success" class="hidden" style="font-size:12px;color:#27500A;margin-top:6px"></p>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('award')"><i class="ti ti-coins"></i> Award Bucks</button>
+    <button class="tab" onclick="showTab('redeem')"><i class="ti ti-shopping-bag"></i> Store Redemption</button>
+    <button class="tab" onclick="showTab('admin')"><i class="ti ti-chart-bar"></i> Admin Reports</button>
+    <button class="tab" onclick="showTab('manage')"><i class="ti ti-settings"></i> Manage</button>
+  </div>
+
+  <div id="tab-award">
+    <div class="card">
+      <p class="section-title"><i class="ti ti-user"></i> Who are you? <span class="required-star">*</span></p>
+      <select id="award-staff-select" onchange="onStaffSelect('award')"><option value="">— Select your name —</option></select>
+    </div>
+    <div id="award-step2" class="hidden">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-single" onclick="setAwardMode('single')"><i class="ti ti-user"></i> Award one student</button>
+        <button class="mode-btn" id="mode-class" onclick="setAwardMode('class')"><i class="ti ti-users"></i> Award a whole class</button>
+      </div>
+      <div id="single-award-panel">
+        <div class="card">
+          <p class="section-title"><i class="ti ti-search"></i> Find a student</p>
+          <div class="row">
+            <div><label>Search by name</label><input type="text" id="award-search-name" placeholder="Type first or last name..." oninput="searchStudents('award')"></div>
+            <div><label>Or filter by teacher</label><select id="award-filter-teacher" onchange="searchStudents('award')"><option value="">All teachers</option></select></div>
+          </div>
+          <div id="award-results" class="search-results hidden"></div>
+        </div>
+        <div id="award-selected-card" class="card hidden">
+          <p class="section-title">Award Bucks</p>
+          <div id="award-student-info" class="selected-student"></div>
+          <label style="margin-bottom:8px">How many Bloodhound Bucks? <span class="required-star">*</span></label>
+          <div class="buck-btns" id="single-buck-btns">
+            <button class="buck-btn" onclick="selectPreset('single',1,event)">1</button>
+            <button class="buck-btn" onclick="selectPreset('single',5,event)">5</button>
+            <button class="buck-btn" onclick="selectPreset('single',10,event)">10</button>
+            <button class="buck-btn" onclick="selectPreset('single','other',event)">Other</button>
+          </div>
+          <div id="single-other-row" class="hidden" style="margin-bottom:12px">
+            <label>Enter amount</label>
+            <input type="number" id="single-other-amount" min="1" max="999" style="width:160px" oninput="singleOtherAmt=parseInt(this.value)||null">
+          </div>
+          <div style="margin-bottom:12px"><label>Reason (optional)</label><input type="text" id="award-reason" placeholder="e.g. Helped a classmate..."></div>
+          <button class="btn primary" onclick="awardBucks()"><i class="ti ti-plus"></i> Award Bucks</button>
+        </div>
+      </div>
+      <div id="class-award-panel" class="hidden">
+        <div class="card">
+          <p class="section-title"><i class="ti ti-users"></i> Select a class</p>
+          <div style="margin-bottom:12px"><label>Choose a teacher's class</label><select id="class-teacher-select" onchange="loadClassRoster()"><option value="">— Select a teacher —</option></select></div>
+          <div id="class-roster-wrap" class="hidden">
+            <div class="class-checklist">
+              <div class="select-all-row">
+                <label style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer;font-size:13px">
+                  <input type="checkbox" id="select-all-cb" onchange="toggleSelectAll()" style="width:16px;height:16px;accent-color:#534AB7"> Select all / deselect all
+                </label>
+                <span id="selected-count" style="font-size:12px;color:#666"></span>
+              </div>
+              <div id="class-roster-list"></div>
+            </div>
+            <label style="margin-bottom:8px">How many Bucks per student? <span class="required-star">*</span></label>
+            <div class="buck-btns" id="class-buck-btns">
+              <button class="buck-btn" onclick="selectPreset('class',1,event)">1</button>
+              <button class="buck-btn" onclick="selectPreset('class',5,event)">5</button>
+              <button class="buck-btn" onclick="selectPreset('class',10,event)">10</button>
+              <button class="buck-btn" onclick="selectPreset('class','other',event)">Other</button>
+            </div>
+            <div id="class-other-row" class="hidden" style="margin-bottom:12px">
+              <label>Enter amount</label>
+              <input type="number" id="class-other-amount" min="1" max="999" style="width:160px" oninput="classOtherAmt=parseInt(this.value)||null;updateClassBanner()">
+            </div>
+            <div style="margin-bottom:12px"><label>Reason (optional)</label><input type="text" id="class-reason" placeholder="e.g. Great behavior at assembly..."></div>
+            <div id="class-confirm-banner" class="confirm-banner hidden"></div>
+            <button class="btn primary" onclick="awardClass()"><i class="ti ti-star"></i> Award to selected students</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="award-toast" class="success-toast hidden"></div>
+    <div id="award-error" class="error-toast hidden"></div>
+  </div>
+
+  <div id="tab-redeem" class="hidden">
+    <div class="card">
+      <p class="section-title"><i class="ti ti-user"></i> Who is processing this? <span class="required-star">*</span></p>
+      <select id="redeem-staff-select" onchange="onStaffSelect('redeem')"><option value="">— Select your name —</option></select>
+    </div>
+    <div id="redeem-step2" class="hidden">
+      <div class="card">
+        <p class="section-title"><i class="ti ti-search"></i> Find a student</p>
+        <div class="row">
+          <div><label>Search by name</label><input type="text" id="redeem-search-name" placeholder="Type first or last name..." oninput="searchStudents('redeem')"></div>
+          <div><label>Or filter by teacher</label><select id="redeem-filter-teacher" onchange="searchStudents('redeem')"><option value="">All teachers</option></select></div>
+        </div>
+        <div id="redeem-results" class="search-results hidden"></div>
+      </div>
+      <div id="redeem-selected-card" class="card hidden">
+        <p class="section-title">Redeem at Store</p>
+        <div id="redeem-student-info" class="selected-student"></div>
+        <div style="margin-bottom:12px"><label>Amount to deduct <span class="required-star">*</span></label><input type="number" id="redeem-amount" min="1" placeholder="Enter bucks to deduct..."></div>
+        <div style="margin-bottom:12px"><label>Item purchased (optional)</label><input type="text" id="redeem-item" placeholder="e.g. Pencil, Homework pass..."></div>
+        <button class="btn danger" onclick="redeemBucks()"><i class="ti ti-minus"></i> Deduct Bucks</button>
+      </div>
+    </div>
+    <div id="redeem-toast" class="success-toast hidden"></div>
+    <div id="redeem-error" class="error-toast hidden"></div>
+  </div>
+
+  <div id="tab-admin" class="hidden">
+    <div id="admin-lock">
+      <div class="card lock-screen">
+        <div class="lock-icon"><i class="ti ti-lock"></i></div>
+        <h2 style="font-size:17px;font-weight:500;margin-bottom:8px">Admin Reports</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:1.25rem">Enter the admin password to access reports and full transaction history.</p>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <input type="password" id="admin-pw" placeholder="Password..." style="width:180px" onkeydown="if(event.key==='Enter')checkAdminPW()">
+          <button class="btn primary" onclick="checkAdminPW()">Unlock</button>
+        </div>
+        <p id="pw-error" class="hidden" style="color:#991f1f;font-size:12px;margin-top:8px">Incorrect password.</p>
+        <p style="font-size:11px;color:#666;margin-top:10px">Default password: <strong>JES2025</strong></p>
+      </div>
+    </div>
+    <div id="admin-content" class="hidden">
+      <div class="metrics-grid" id="admin-metrics"></div>
+      <div class="card">
+        <p class="section-title">Student balances</p>
+        <div class="filter-row">
+          <input type="text" id="report-search" placeholder="Search student..." oninput="renderReport()">
+          <select id="report-grade" onchange="renderReport()"><option value="">All grades</option><option>3</option><option>4</option><option>5</option></select>
+          <select id="report-teacher" onchange="renderReport()"><option value="">All teachers</option></select>
+          <select id="report-period" onchange="renderReport()">
+            <option value="all">All year</option>
+            <option value="q1">Q1 (Aug–Oct)</option>
+            <option value="q2">Q2 (Nov–Jan)</option>
+            <option value="q3">Q3 (Feb–Mar)</option>
+            <option value="q4">Q4 (Apr–Jun)</option>
+          </select>
+        </div>
+        <div class="log-row log-header" style="grid-template-columns:1fr 60px 110px 70px 70px">
+          <span>Student</span><span>Grade</span><span>Teacher</span><span>Earned</span><span>Balance</span>
+        </div>
+        <div id="report-rows"></div>
+      </div>
+      <div class="card">
+        <p class="section-title">Transaction log</p>
+        <div class="log-row log-header"><span>Date</span><span>Student</span><span>Staff</span><span>Amount</span><span>Balance</span></div>
+        <div id="log-rows"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-manage" class="hidden">
+    <div id="manage-lock">
+      <div class="card lock-screen">
+        <div class="lock-icon"><i class="ti ti-lock"></i></div>
+        <h2 style="font-size:17px;font-weight:500;margin-bottom:8px">Manage</h2>
+        <p style="color:#666;font-size:13px;margin-bottom:1.25rem">Admin access required.</p>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <input type="password" id="manage-pw" placeholder="Password..." style="width:180px" onkeydown="if(event.key==='Enter')checkManagePW()">
+          <button class="btn primary" onclick="checkManagePW()">Unlock</button>
+        </div>
+        <p id="manage-pw-error" class="hidden" style="color:#991f1f;font-size:12px;margin-top:8px">Incorrect password.</p>
+      </div>
+    </div>
+    <div id="manage-content" class="hidden">
+      <div class="card">
+        <p class="section-title"><i class="ti ti-users"></i> Staff roster</p>
+        <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:flex-end">
+          <div style="flex:1"><label>Add staff member</label><input type="text" id="add-staff-name" placeholder="Full name..."></div>
+          <button class="btn primary" onclick="addStaff()" style="white-space:nowrap"><i class="ti ti-user-plus"></i> Add</button>
+        </div>
+        <div id="staff-roster-list"></div>
+      </div>
+      <div class="card">
+        <p class="section-title"><i class="ti ti-user-plus"></i> Add a student</p>
+        <div class="row3">
+          <div><label>First name</label><input type="text" id="add-first" placeholder="First..."></div>
+          <div><label>Last name</label><input type="text" id="add-last" placeholder="Last..."></div>
+          <div><label>Grade</label><select id="add-grade"><option value="">—</option><option>3</option><option>4</option><option>5</option></select></div>
+        </div>
+        <div style="margin-bottom:12px"><label>Homeroom teacher</label><input type="text" id="add-teacher" placeholder="Teacher name..."></div>
+        <button class="btn primary" onclick="addStudent()"><i class="ti ti-plus"></i> Add student</button>
+        <span id="add-toast" style="font-size:13px;color:green;margin-left:12px"></span>
+      </div>
+      <div class="card">
+        <p class="section-title"><i class="ti ti-lock"></i> Change admin password</p>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div style="flex:1"><label>New password</label><input type="password" id="new-pw" placeholder="New password..."></div>
+          <button class="btn" onclick="changePW()">Update</button>
+        </div>
+        <span id="pw-toast" style="font-size:13px;color:green;margin-top:8px;display:block"></span>
+      </div>
+      <div class="card">
+        <p class="section-title"><i class="ti ti-list"></i> Student roster</p>
+        <p style="font-size:13px;color:#666;margin-bottom:1rem">Click Remove to delete a student.</p>
+        <div id="roster-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="alert-overlay" class="alert-overlay hidden">
+  <div class="alert-box">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <i class="ti ti-alert-triangle" style="font-size:24px;color:#e67e22"></i>
+      <strong style="font-size:16px">Whoa — that's a lot of Bucks!</strong>
+    </div>
+    <p id="alert-msg" style="font-size:14px;color:#555;margin-bottom:1.25rem"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" onclick="closeAlert()">Cancel</button>
+      <button class="btn primary" onclick="confirmAward()">Yes, award them</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALERT_THRESHOLD=50;
+let adminPW='JES2025';
+let pendingAward=null;
+let selectedAwardStudent=null;
+let selectedRedeemStudent=null;
+let singleBuckAmt=null;
+let singleOtherAmt=null;
+let classBuckAmt=null;
+let classOtherAmt=null;
+let SCRIPT_URL='https://script.google.com/macros/s/AKfycbwPpmjKg7H4w8wo5QqngMbpZmBPEZLUcwxF4OhZqkYrMVEaO0olhHxK_Mn1fTAor-1W/exec';
+let appData={students:[],staff:[],ledger:[]};
+
+const initStudents=[];
+const initStaff=[];
+
+async function api(params){
+  if(!SCRIPT_URL)throw new Error('Not connected');
+  const url=SCRIPT_URL+'?'+new URLSearchParams(params).toString();
+  const res=await fetch(url);
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const json=await res.json();
+  if(json.error)throw new Error(json.error);
+  return json;
+}
+
+function setStatus(state,msg){
+  const el=document.getElementById('connection-status');
+  const pill=document.getElementById('connect-pill');
+  const instructions=document.getElementById('connect-instructions');
+  const errEl=document.getElementById('connect-error');
+  const successEl=document.getElementById('connect-success');
+  errEl.classList.add('hidden');successEl.classList.add('hidden');
+  if(state==='connected'){
+    el.innerHTML='<span class="connected-pill"><i class="ti ti-circle-check" style="font-size:13px"></i> Live</span>';
+    pill.innerHTML='<span class="connected-pill"><i class="ti ti-circle-check" style="font-size:13px"></i> Connected</span>';
+    instructions.textContent='Your app is syncing live with Google Sheets.';
+    document.getElementById('script-url-input').disabled=true;
+    document.getElementById('connect-btn').textContent='Reconnect';
+    document.getElementById('connect-btn').onclick=resetConnection;
+    successEl.textContent='✓ Connected! Sample data loaded into your Google Sheet.';
+    successEl.classList.remove('hidden');
+    localStorage.setItem('jbb_script_url',SCRIPT_URL);
+  } else if(state==='loading'){
+    el.innerHTML='<span style="font-size:12px;color:#666"><span class="spinner"></span>Connecting...</span>';
+  } else if(state==='error'){
+    el.innerHTML='<span style="font-size:12px;color:#991f1f"><i class="ti ti-alert-circle"></i> Not connected</span>';
+    errEl.textContent=msg||'Connection failed.';
+    errEl.classList.remove('hidden');
+    document.getElementById('script-url-input').disabled=false;
+    document.getElementById('connect-btn').innerHTML='<i class="ti ti-plug"></i> Connect';
+    document.getElementById('connect-btn').onclick=connectSheet;
+  }
+}
+
+function resetConnection(){
+  SCRIPT_URL='https://script.google.com/macros/s/AKfycbwPpmjKg7H4w8wo5QqngMbpZmBPEZLUcwxF4OhZqkYrMVEaO0olhHxK_Mn1fTAor-1W/exec';
+  localStorage.removeItem('jbb_script_url');
+  document.getElementById('script-url-input').value='';
+  document.getElementById('script-url-input').disabled=false;
+  document.getElementById('connect-btn').innerHTML='<i class="ti ti-plug"></i> Connect';
+  document.getElementById('connect-btn').onclick=connectSheet;
+  document.getElementById('connect-pill').innerHTML='';
+  document.getElementById('connect-instructions').textContent='Paste your Apps Script Web App URL below to sync data across all devices.';
+  document.getElementById('connect-success').classList.add('hidden');
+  document.getElementById('connect-error').classList.add('hidden');
+  document.getElementById('connection-status').innerHTML='';
+  appData={students:initStudents,staff:initStaff,ledger:[]};
+  populateAll();
+}
+
+async function connectSheet(){
+  const url=document.getElementById('script-url-input').value.trim();
+  const errEl=document.getElementById('connect-error');
+  errEl.classList.add('hidden');
+  if(!url||!url.includes('script.google.com')){
+    errEl.textContent='Please paste a valid Apps Script URL ending in /exec';
+    errEl.classList.remove('hidden');return;
+  }
+  SCRIPT_URL=url;
+  setStatus('loading');
+  try{
+    const data=await api({action:'getAll'});
+    if(data.students.length===0&&data.staff.length===0){
+      await seedData();
+      const seeded=await api({action:'getAll'});
+      appData=seeded;
+    } else {
+      appData=data;
+    }
+    setStatus('connected');
+    populateAll();
+  }catch(e){
+    SCRIPT_URL='https://script.google.com/macros/s/AKfycbwPpmjKg7H4w8wo5QqngMbpZmBPEZLUcwxF4OhZqkYrMVEaO0olhHxK_Mn1fTAor-1W/exec';
+    setStatus('error','Connection failed: '+e.message+'. Make sure the script is deployed as a Web App with access set to "Anyone".');
+  }
+}
+
+async function seedData(){
+  // No sample data to seed - sheet starts empty
+}
+
+function getBalance(sid){return appData.ledger.filter(e=>e.studentId===sid).reduce((a,e)=>a+e.amount,0);}
+function getTotalEarned(sid,s,e){return appData.ledger.filter(x=>x.studentId===sid&&x.amount>0&&(!s||new Date(x.date)>=s)&&(!e||new Date(x.date)<=e)).reduce((a,x)=>a+x.amount,0);}
+function getTeachers(){return[...new Set(appData.students.map(s=>s.teacher))].sort();}
+function populateAll(){populateStaffDropdowns();populateTeacherDropdowns();populateClassTeachers();}
+
+function populateStaffDropdowns(){
+  const staff=appData.staff.slice().sort();
+  ['award-staff-select','redeem-staff-select'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">— Select your name —</option>';
+    staff.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;el.appendChild(o);});
+    if(cur)el.value=cur;
+  });
+}
+
+function populateTeacherDropdowns(){
+  const teachers=getTeachers();
+  ['award-filter-teacher','redeem-filter-teacher','report-teacher'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">All teachers</option>';
+    teachers.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;el.appendChild(o);});
+    el.value=cur;
+  });
+}
+
+function populateClassTeachers(){
+  const el=document.getElementById('class-teacher-select');if(!el)return;
+  const cur=el.value;
+  el.innerHTML='<option value="">— Select a teacher —</option>';
+  getTeachers().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;el.appendChild(o);});
+  if(cur)el.value=cur;
+}
+
+function onStaffSelect(mode){
+  document.getElementById(mode+'-step2').classList.toggle('hidden',!document.getElementById(mode+'-staff-select').value);
+}
+
+function setAwardMode(mode){
+  document.getElementById('mode-single').classList.toggle('active',mode==='single');
+  document.getElementById('mode-class').classList.toggle('active',mode==='class');
+  document.getElementById('single-award-panel').classList.toggle('hidden',mode!=='single');
+  document.getElementById('class-award-panel').classList.toggle('hidden',mode!=='class');
+  document.getElementById('award-toast').classList.add('hidden');
+  document.getElementById('award-error').classList.add('hidden');
+}
+
+function showTab(name){
+  ['award','redeem','admin','manage'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('hidden',t!==name));
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['award','redeem','admin','manage'][i]===name));
+  populateAll();
+  if(name==='admin'&&!document.getElementById('admin-content').classList.contains('hidden')){renderReport();renderLog();renderAdminMetrics();}
+}
+
+function searchStudents(mode){
+  const name=document.getElementById(mode+'-search-name').value.toLowerCase();
+  const teacher=document.getElementById(mode+'-filter-teacher').value;
+  const filtered=appData.students.filter(s=>(!name||(s.first+' '+s.last).toLowerCase().includes(name)||s.last.toLowerCase().includes(name))&&(!teacher||s.teacher===teacher));
+  const container=document.getElementById(mode+'-results');
+  if(name===''&&teacher===''){container.classList.add('hidden');return;}
+  container.classList.remove('hidden');container.innerHTML='';
+  if(!filtered.length){container.innerHTML='<div style="padding:12px;font-size:13px;color:#666">No students found.</div>';return;}
+  filtered.forEach(s=>{
+    const bal=getBalance(s.id);
+    const div=document.createElement('div');div.className='search-item';
+    div.innerHTML=`<span><strong>${s.last}, ${s.first}</strong> <span style="color:#666;font-size:12px">Gr.${s.grade} · ${s.teacher}</span></span><span class="badge badge-purple">${bal} Bucks</span>`;
+    div.onclick=()=>selectStudent(mode,s);container.appendChild(div);
+  });
+}
+
+function selectStudent(mode,s){
+  if(mode==='award'){
+    selectedAwardStudent=s;singleBuckAmt=null;singleOtherAmt=null;
+    document.querySelectorAll('#single-buck-btns .buck-btn').forEach(b=>b.classList.remove('sel'));
+    document.getElementById('single-other-row').classList.add('hidden');
+    document.getElementById('single-other-amount').value='';
+    document.getElementById('award-reason').value='';
+    document.getElementById('award-student-info').innerHTML=`<div><strong>${s.first} ${s.last}</strong><br><span style="font-size:12px;color:#666">Grade ${s.grade} · ${s.teacher}</span></div><span class="badge badge-purple">${getBalance(s.id)} Bucks</span>`;
+    document.getElementById('award-selected-card').classList.remove('hidden');
+    document.getElementById('award-toast').classList.add('hidden');
+    document.getElementById('award-error').classList.add('hidden');
+    document.getElementById('award-results').classList.add('hidden');
+    document.getElementById('award-search-name').value='';
+    document.getElementById('award-filter-teacher').value='';
+  } else {
+    selectedRedeemStudent=s;
+    document.getElementById('redeem-amount').value='';document.getElementById('redeem-item').value='';
+    const bal=getBalance(s.id);
+    const bc=bal>=10?'badge-green':bal>=5?'badge-amber':'badge-red';
+    document.getElementById('redeem-student-info').innerHTML=`<div><strong>${s.first} ${s.last}</strong><br><span style="font-size:12px;color:#666">Grade ${s.grade} · ${s.teacher}</span></div><span class="badge ${bc}">${bal} Bucks remaining</span>`;
+    document.getElementById('redeem-selected-card').classList.remove('hidden');
+    document.getElementById('redeem-toast').classList.add('hidden');
+    document.getElementById('redeem-error').classList.add('hidden');
+    document.getElementById('redeem-results').classList.add('hidden');
+    document.getElementById('redeem-search-name').value='';document.getElementById('redeem-filter-teacher').value='';
+  }
+}
+
+function selectPreset(context,val,e){
+  document.querySelectorAll('#'+(context==='single'?'single':'class')+'-buck-btns .buck-btn').forEach(b=>b.classList.remove('sel'));
+  e.target.classList.add('sel');
+  if(context==='single'){document.getElementById('single-other-row').classList.toggle('hidden',val!=='other');singleBuckAmt=val==='other'?null:val;}
+  else{document.getElementById('class-other-row').classList.toggle('hidden',val!=='other');classBuckAmt=val==='other'?null:val;}
+  if(context==='class')updateClassBanner();
+}
+
+function loadClassRoster(){
+  const teacher=document.getElementById('class-teacher-select').value;
+  const wrap=document.getElementById('class-roster-wrap');
+  if(!teacher){wrap.classList.add('hidden');return;}
+  const students=appData.students.filter(s=>s.teacher===teacher).sort((a,b)=>a.last.localeCompare(b.last));
+  const list=document.getElementById('class-roster-list');list.innerHTML='';
+  students.forEach(s=>{
+    const row=document.createElement('div');row.className='class-student-row';
+    row.innerHTML=`<input type="checkbox" id="cb-${s.id}" checked onchange="updateClassBanner()"><label for="cb-${s.id}" style="flex:1;cursor:pointer;margin:0;font-size:14px">${s.last}, ${s.first}</label><span class="badge badge-purple" style="font-size:11px">${getBalance(s.id)} Bucks</span>`;
+    list.appendChild(row);
+  });
+  document.getElementById('select-all-cb').checked=true;
+  wrap.classList.remove('hidden');
+  classBuckAmt=null;classOtherAmt=null;
+  document.querySelectorAll('#class-buck-btns .buck-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('class-other-row').classList.add('hidden');
+  document.getElementById('class-other-amount').value='';
+  document.getElementById('class-reason').value='';
+  updateClassBanner();
+}
+
+function toggleSelectAll(){
+  const checked=document.getElementById('select-all-cb').checked;
+  appData.students.filter(s=>s.teacher===document.getElementById('class-teacher-select').value).forEach(s=>{const cb=document.getElementById('cb-'+s.id);if(cb)cb.checked=checked;});
+  updateClassBanner();
+}
+
+function getSelectedStudentIds(){
+  const teacher=document.getElementById('class-teacher-select').value;
+  return appData.students.filter(s=>s.teacher===teacher&&document.getElementById('cb-'+s.id)?.checked).map(s=>s.id);
+}
+
+function updateClassBanner(){
+  const ids=getSelectedStudentIds();
+  const amt=classBuckAmt||(document.getElementById('class-other-row').classList.contains('hidden')?null:classOtherAmt);
+  const teacher=document.getElementById('class-teacher-select').value;
+  const all=appData.students.filter(s=>s.teacher===teacher).length;
+  document.getElementById('select-all-cb').checked=ids.length>0&&ids.length===all;
+  document.getElementById('selected-count').textContent=`${ids.length} student${ids.length!==1?'s':''} selected`;
+  const banner=document.getElementById('class-confirm-banner');
+  if(ids.length>0&&amt){banner.classList.remove('hidden');banner.innerHTML=`<i class="ti ti-info-circle" style="font-size:18px;flex-shrink:0"></i><span><strong>${amt} Buck${amt!==1?'s':''}</strong> will be awarded to <strong>${ids.length} student${ids.length!==1?'s':''}</strong> — <strong>${amt*ids.length} Bucks</strong> total.</span>`;}
+  else banner.classList.add('hidden');
+}
+
+function awardBucks(){
+  if(!selectedAwardStudent)return;
+  const amt=singleBuckAmt||(document.getElementById('single-other-row').classList.contains('hidden')?null:singleOtherAmt);
+  if(!amt||amt<1){alert('Please select or enter an amount.');return;}
+  const staff=document.getElementById('award-staff-select').value;
+  const reason=document.getElementById('award-reason').value;
+  if(amt>=ALERT_THRESHOLD){
+    document.getElementById('alert-msg').textContent=`You're about to give ${amt} Bloodhound Bucks to ${selectedAwardStudent.first} ${selectedAwardStudent.last}. Are you sure?`;
+    document.getElementById('alert-overlay').classList.remove('hidden');
+    pendingAward={type:'single',student:selectedAwardStudent,amount:amt,reason,staff};return;
+  }
+  doAwardSingle(selectedAwardStudent,amt,reason,staff);
+}
+
+function awardClass(){
+  const ids=getSelectedStudentIds();
+  if(!ids.length){alert('Please select at least one student.');return;}
+  const amt=classBuckAmt||(document.getElementById('class-other-row').classList.contains('hidden')?null:classOtherAmt);
+  if(!amt||amt<1){alert('Please select or enter an amount.');return;}
+  const staff=document.getElementById('award-staff-select').value;
+  const reason=document.getElementById('class-reason').value;
+  if(amt>=ALERT_THRESHOLD){
+    document.getElementById('alert-msg').textContent=`You're about to give ${amt} Bucks each to ${ids.length} students (${amt*ids.length} total). Are you sure?`;
+    document.getElementById('alert-overlay').classList.remove('hidden');
+    pendingAward={type:'class',ids,amount:amt,reason,staff};return;
+  }
+  doAwardClass(ids,amt,reason,staff);
+}
+
+function confirmAward(){
+  if(!pendingAward){closeAlert();return;}
+  if(pendingAward.type==='single')doAwardSingle(pendingAward.student,pendingAward.amount,pendingAward.reason,pendingAward.staff);
+  else doAwardClass(pendingAward.ids,pendingAward.amount,pendingAward.reason,pendingAward.staff);
+  closeAlert();
+}
+function closeAlert(){document.getElementById('alert-overlay').classList.add('hidden');pendingAward=null;}
+
+async function doAwardSingle(student,amount,reason,staff){
+  const entry={studentId:student.id,date:new Date().toISOString(),amount,reason:reason||'',staff,type:'award'};
+  appData.ledger.push(entry);
+  const toast=document.getElementById('award-toast');
+  toast.textContent=`✓ ${amount} Bucks awarded to ${student.first} ${student.last}! New balance: ${getBalance(student.id)} Bucks.`;
+  toast.classList.remove('hidden');
+  document.getElementById('award-selected-card').classList.add('hidden');
+  document.getElementById('award-staff-select').value='';
+  document.getElementById('award-step2').classList.add('hidden');
+  selectedAwardStudent=null;singleBuckAmt=null;singleOtherAmt=null;
+  if(SCRIPT_URL)try{await api({action:'addTransaction',...entry});}catch(e){document.getElementById('award-error').textContent='⚠ Awarded locally but failed to sync.';document.getElementById('award-error').classList.remove('hidden');}
+}
+
+async function doAwardClass(ids,amount,reason,staff){
+  const now=new Date().toISOString();
+  const entries=ids.map(sid=>({studentId:sid,date:now,amount,reason:reason||'',staff,type:'award-class'}));
+  entries.forEach(e=>appData.ledger.push(e));
+  const toast=document.getElementById('award-toast');
+  toast.textContent=`✓ ${amount} Bucks awarded to ${ids.length} students (${amount*ids.length} total)!`;
+  toast.classList.remove('hidden');
+  document.getElementById('award-staff-select').value='';
+  document.getElementById('award-step2').classList.add('hidden');
+  classBuckAmt=null;classOtherAmt=null;
+  document.getElementById('class-teacher-select').value='';
+  document.getElementById('class-roster-wrap').classList.add('hidden');
+  if(SCRIPT_URL)try{for(const e of entries)await api({action:'addTransaction',...e});}catch(e){document.getElementById('award-error').textContent='⚠ Awarded locally but failed to sync.';document.getElementById('award-error').classList.remove('hidden');}
+}
+
+async function redeemBucks(){
+  if(!selectedRedeemStudent)return;
+  const amt=parseInt(document.getElementById('redeem-amount').value);
+  if(!amt||amt<1){alert('Please enter an amount.');return;}
+  const bal=getBalance(selectedRedeemStudent.id);
+  if(amt>bal){alert(`${selectedRedeemStudent.first} only has ${bal} Bucks.`);return;}
+  const entry={studentId:selectedRedeemStudent.id,date:new Date().toISOString(),amount:-amt,reason:document.getElementById('redeem-item').value||'Store purchase',staff:document.getElementById('redeem-staff-select').value,type:'redeem'};
+  appData.ledger.push(entry);
+  const toast=document.getElementById('redeem-toast');
+  toast.textContent=`✓ ${amt} Bucks deducted from ${selectedRedeemStudent.first} ${selectedRedeemStudent.last}. New balance: ${getBalance(selectedRedeemStudent.id)} Bucks.`;
+  toast.classList.remove('hidden');
+  document.getElementById('redeem-selected-card').classList.add('hidden');
+  document.getElementById('redeem-staff-select').value='';
+  document.getElementById('redeem-step2').classList.add('hidden');
+  selectedRedeemStudent=null;
+  if(SCRIPT_URL)try{await api({action:'addTransaction',...entry});}catch(e){document.getElementById('redeem-error').textContent='⚠ Deducted locally but failed to sync.';document.getElementById('redeem-error').classList.remove('hidden');}
+}
+
+function checkAdminPW(){
+  if(document.getElementById('admin-pw').value===adminPW){
+    document.getElementById('admin-lock').classList.add('hidden');
+    document.getElementById('admin-content').classList.remove('hidden');
+    renderReport();renderLog();renderAdminMetrics();populateAll();
+  } else document.getElementById('pw-error').classList.remove('hidden');
+}
+
+function checkManagePW(){
+  if(document.getElementById('manage-pw').value===adminPW){
+    document.getElementById('manage-lock').classList.add('hidden');
+    document.getElementById('manage-content').classList.remove('hidden');
+    renderRoster();renderStaffRoster();populateAll();
+  } else document.getElementById('manage-pw-error').classList.remove('hidden');
+}
+
+function getQDateRange(q){
+  const y=new Date().getFullYear();
+  const r={q1:[new Date(y,7,1),new Date(y,9,31)],q2:[new Date(y,10,1),new Date(y+1,0,31)],q3:[new Date(y+1,1,1),new Date(y+1,2,31)],q4:[new Date(y+1,3,1),new Date(y+1,5,30)]};
+  return r[q]||[null,null];
+}
+
+function renderReport(){
+  const search=document.getElementById('report-search').value.toLowerCase();
+  const grade=document.getElementById('report-grade').value;
+  const teacher=document.getElementById('report-teacher').value;
+  const period=document.getElementById('report-period').value;
+  let[sD,eD]=[null,null];if(period!=='all')[sD,eD]=getQDateRange(period);
+  const filtered=appData.students.filter(s=>(!search||(s.first+' '+s.last).toLowerCase().includes(search))&&(!grade||s.grade===grade)&&(!teacher||s.teacher===teacher));
+  const container=document.getElementById('report-rows');container.innerHTML='';
+  filtered.sort((a,b)=>a.last.localeCompare(b.last)).forEach(s=>{
+    const earned=getTotalEarned(s.id,sD,eD);const balance=getBalance(s.id);
+    const bc=balance>=20?'badge-green':balance>=5?'badge-amber':'badge-red';
+    const row=document.createElement('div');row.className='log-row';row.style.gridTemplateColumns='1fr 60px 110px 70px 70px';
+    row.innerHTML=`<span>${s.last}, ${s.first}</span><span>Gr.${s.grade}</span><span style="font-size:12px">${s.teacher}</span><span>${earned}</span><span><span class="badge ${bc}">${balance}</span></span>`;
+    container.appendChild(row);
+  });
+  if(!filtered.length)container.innerHTML='<p style="font-size:13px;color:#666;padding:8px 0">No students match.</p>';
+}
+
+function renderLog(){
+  const allL=appData.ledger;const container=document.getElementById('log-rows');container.innerHTML='';
+  if(!allL.length){container.innerHTML='<p style="font-size:13px;color:#666;padding:8px 0">No transactions yet.</p>';return;}
+  allL.slice().reverse().forEach(entry=>{
+    const s=appData.students.find(x=>x.id===entry.studentId)||{first:'Unknown',last:''};
+    const d=new Date(entry.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const color=entry.amount>0?'green':'#991f1f';const sign=entry.amount>0?'+':'';
+    let runBal=0;for(let i=0;i<allL.length;i++){if(allL[i].studentId===entry.studentId)runBal+=allL[i].amount;if(allL[i]===entry)break;}
+    const typeLabel=entry.type==='award-class'?' <span class="badge badge-blue" style="font-size:10px">class</span>':'';
+    const row=document.createElement('div');row.className='log-row';
+    row.innerHTML=`<span style="font-size:12px">${d}</span><span>${s.last}, ${s.first}${typeLabel}</span><span style="font-size:12px">${entry.staff||'—'}</span><span style="color:${color};font-weight:500">${sign}${entry.amount}</span><span>${runBal}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function renderAdminMetrics(){
+  let awarded=0,redeemed=0,withBucks=0;
+  appData.ledger.forEach(e=>{if(e.amount>0)awarded+=e.amount;else redeemed+=Math.abs(e.amount);});
+  appData.students.forEach(s=>{if(getBalance(s.id)>0)withBucks++;});
+  document.getElementById('admin-metrics').innerHTML=`
+    <div class="metric"><div class="metric-val">${appData.students.length}</div><div class="metric-lbl">Students</div></div>
+    <div class="metric"><div class="metric-val">${awarded}</div><div class="metric-lbl">Total awarded</div></div>
+    <div class="metric"><div class="metric-val">${redeemed}</div><div class="metric-lbl">Total redeemed</div></div>
+    <div class="metric"><div class="metric-val">${withBucks}</div><div class="metric-lbl">Students with Bucks</div></div>`;
+}
+
+async function addStaff(){
+  const name=document.getElementById('add-staff-name').value.trim();
+  if(!name){alert('Please enter a name.');return;}
+  if(appData.staff.includes(name)){alert('Already in roster.');return;}
+  appData.staff.push(name);document.getElementById('add-staff-name').value='';
+  renderStaffRoster();populateAll();
+  if(SCRIPT_URL)try{await api({action:'addStaff',name});}catch(e){}
+}
+
+function renderStaffRoster(){
+  const container=document.getElementById('staff-roster-list');container.innerHTML='';
+  appData.staff.slice().sort().forEach(name=>{
+    const row=document.createElement('div');row.className='student-row';
+    row.innerHTML=`<span><i class="ti ti-user" style="font-size:14px;margin-right:6px;color:#666"></i>${name}</span><button class="btn sm danger" onclick="removeStaff('${name.replace(/'/g,"\\'")}')"><i class="ti ti-trash"></i> Remove</button>`;
+    container.appendChild(row);
+  });
+}
+
+async function removeStaff(name){
+  if(!confirm(`Remove ${name}?`))return;
+  appData.staff=appData.staff.filter(s=>s!==name);
+  renderStaffRoster();populateAll();
+  if(SCRIPT_URL)try{await api({action:'removeStaff',name});}catch(e){}
+}
+
+async function addStudent(){
+  const first=document.getElementById('add-first').value.trim();
+  const last=document.getElementById('add-last').value.trim();
+  const grade=document.getElementById('add-grade').value;
+  const teacher=document.getElementById('add-teacher').value.trim();
+  if(!first||!last||!grade||!teacher){alert('Please fill in all fields.');return;}
+  const newId=Math.max(...appData.students.map(s=>s.id),0)+1;
+  const student={id:newId,first,last,grade,teacher};
+  appData.students.push(student);
+  document.getElementById('add-first').value='';document.getElementById('add-last').value='';
+  document.getElementById('add-grade').value='';document.getElementById('add-teacher').value='';
+  document.getElementById('add-toast').textContent=`✓ ${first} ${last} added!`;
+  setTimeout(()=>document.getElementById('add-toast').textContent='',3000);
+  renderRoster();populateAll();
+  if(SCRIPT_URL)try{await api({action:'addStudent',...student});}catch(e){}
+}
+
+function renderRoster(){
+  const container=document.getElementById('roster-list');container.innerHTML='';
+  appData.students.sort((a,b)=>a.last.localeCompare(b.last)).forEach(s=>{
+    const row=document.createElement('div');row.className='student-row';
+    row.innerHTML=`<span><strong>${s.last}, ${s.first}</strong> <span style="font-size:12px;color:#666">Gr.${s.grade} · ${s.teacher}</span></span><button class="btn sm danger" onclick="removeStudent(${s.id})"><i class="ti ti-trash"></i> Remove</button>`;
+    container.appendChild(row);
+  });
+}
+
+async function removeStudent(id){
+  if(!confirm('Remove this student?'))return;
+  appData.students=appData.students.filter(s=>s.id!==id);
+  renderRoster();populateAll();
+  if(SCRIPT_URL)try{await api({action:'removeStudent',id});}catch(e){}
+}
+
+function changePW(){
+  const pw=document.getElementById('new-pw').value;
+  if(!pw){alert('Enter a new password.');return;}
+  adminPW=pw;localStorage.setItem('jbb_admin_pw',pw);
+  document.getElementById('pw-toast').textContent='✓ Password updated!';
+  document.getElementById('new-pw').value='';
+  setTimeout(()=>document.getElementById('pw-toast').textContent='',3000);
+}
+
+(function init(){
+  SCRIPT_URL='https://script.google.com/macros/s/AKfycbwPpmjKg7H4w8wo5QqngMbpZmBPEZLUcwxF4OhZqkYrMVEaO0olhHxK_Mn1fTAor-1W/exec';
+  document.getElementById('connect-card').classList.add('hidden');
+  const savedPW=localStorage.getItem('jbb_admin_pw');
+  if(savedPW)adminPW=savedPW;
+  appData={students:[],staff:[],ledger:[]};
+  populateAll();
+  loadData();
+})();
+</script>
+</body>
+</html>
+
