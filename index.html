@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -335,12 +336,20 @@ const initStaff=[];
 
 async function api(params){
   if(!SCRIPT_URL)throw new Error('Not connected');
-  const url=SCRIPT_URL+'?'+new URLSearchParams(params).toString();
-  const res=await fetch(url);
-  if(!res.ok)throw new Error('HTTP '+res.status);
-  const json=await res.json();
-  if(json.error)throw new Error(json.error);
-  return json;
+  return new Promise((resolve,reject)=>{
+    const cbName='jbb_cb_'+Date.now();
+    const url=SCRIPT_URL+'?'+new URLSearchParams({...params,callback:cbName}).toString();
+    const script=document.createElement('script');
+    window[cbName]=function(data){
+      delete window[cbName];
+      document.body.removeChild(script);
+      if(data.error)reject(new Error(data.error));
+      else resolve(data);
+    };
+    script.onerror=()=>reject(new Error('Script load failed'));
+    script.src=url;
+    document.body.appendChild(script);
+  });
 }
 
 function setStatus(state,msg){
@@ -793,7 +802,18 @@ function changePW(){
   if(savedPW)adminPW=savedPW;
   appData={students:[],staff:[],ledger:[]};
   populateAll();
-  loadData();
+  // Load from Google Sheets immediately
+  (async function(){
+    try{
+      setStatus('loading');
+      const data=await api({action:'getAll'});
+      appData=data;
+      setStatus('connected');
+      populateAll();
+    }catch(e){
+      setStatus('error','Could not connect to Google Sheets. Please try refreshing the page.');
+    }
+  })();
 })();
 </script>
 </body>
