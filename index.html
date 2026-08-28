@@ -269,6 +269,23 @@ input:focus,select:focus{outline:2px solid #7F77DD;outline-offset:1px}
     </div>
     <div id="manage-content" class="hidden">
       <div class="card">
+        <p class="section-title"><i class="ti ti-users-group"></i> Custom groups</p>
+        <p style="font-size:13px;color:#666;margin-bottom:1rem">Create groups for math, reading, or any set of students.</p>
+        <div style="margin-bottom:12px">
+          <label>Group name</label>
+          <input type="text" id="new-group-name" placeholder="e.g. Mrs. Smith Math, 4th Grade Reading...">
+        </div>
+        <div style="margin-bottom:12px">
+          <label>Search and add students</label>
+          <input type="text" id="group-student-search" placeholder="Type a student name..." oninput="searchGroupStudents()">
+          <div id="group-search-results" class="search-results hidden"></div>
+        </div>
+        <div id="group-selected-students" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+        <button class="btn primary" onclick="saveGroup()"><i class="ti ti-plus"></i> Save group</button>
+        <span id="group-toast" style="font-size:13px;color:green;margin-left:12px"></span>
+        <div id="groups-list" style="margin-top:1rem"></div>
+      </div>
+      <div class="card">
         <p class="section-title"><i class="ti ti-users"></i> Staff roster</p>
         <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:flex-end">
           <div style="flex:1"><label>Add staff member</label><input type="text" id="add-staff-name" placeholder="Full name..."></div>
@@ -329,7 +346,7 @@ let singleOtherAmt=null;
 let classBuckAmt=null;
 let classOtherAmt=null;
 let SCRIPT_URL='https://script.google.com/macros/s/AKfycbwPpmjKg7H4w8wo5QqngMbpZmBPEZLUcwxF4OhZqkYrMVEaO0olhHxK_Mn1fTAor-1W/exec';
-let appData={students:[],staff:[],ledger:[]};
+let appData={students:[],staff:[],ledger:[],groups:[]};
 
 const initStudents=[];
 const initStaff=[];
@@ -458,8 +475,15 @@ function populateTeacherDropdowns(){
 function populateClassTeachers(){
   const el=document.getElementById('class-teacher-select');if(!el)return;
   const cur=el.value;
-  el.innerHTML='<option value="">— Select a teacher —</option>';
-  getTeachers().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;el.appendChild(o);});
+  el.innerHTML='<option value="">— Select a teacher or group —</option>';
+  if(appData.groups&&appData.groups.length>0){
+    const og=document.createElement('optgroup');og.label='Custom Groups';
+    appData.groups.forEach(g=>{const o=document.createElement('option');o.value='group:'+g.id;o.textContent=g.name;og.appendChild(o);});
+    el.appendChild(og);
+  }
+  const ot=document.createElement('optgroup');ot.label='Homeroom Classes';
+  getTeachers().forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;ot.appendChild(o);});
+  el.appendChild(ot);
   if(cur)el.value=cur;
 }
 
@@ -536,10 +560,17 @@ function selectPreset(context,val,e){
 }
 
 function loadClassRoster(){
-  const teacher=document.getElementById('class-teacher-select').value;
+  const val=document.getElementById('class-teacher-select').value;
   const wrap=document.getElementById('class-roster-wrap');
-  if(!teacher){wrap.classList.add('hidden');return;}
-  const students=appData.students.filter(s=>s.teacher===teacher).sort((a,b)=>a.last.localeCompare(b.last));
+  if(!val){wrap.classList.add('hidden');return;}
+  let students;
+  if(val.startsWith('group:')){
+    const groupId=val.replace('group:','');
+    const group=appData.groups.find(g=>g.id===groupId);
+    students=group?appData.students.filter(s=>group.studentIds.includes(s.id)).sort((a,b)=>a.last.localeCompare(b.last)):[];
+  } else {
+    students=appData.students.filter(s=>s.teacher===val).sort((a,b)=>a.last.localeCompare(b.last));
+  }
   const list=document.getElementById('class-roster-list');list.innerHTML='';
   students.forEach(s=>{
     const row=document.createElement('div');row.className='class-student-row';
@@ -563,15 +594,31 @@ function toggleSelectAll(){
 }
 
 function getSelectedStudentIds(){
-  const teacher=document.getElementById('class-teacher-select').value;
-  return appData.students.filter(s=>s.teacher===teacher&&document.getElementById('cb-'+s.id)?.checked).map(s=>s.id);
+  const val=document.getElementById('class-teacher-select').value;
+  let pool;
+  if(val.startsWith('group:')){
+    const groupId=val.replace('group:','');
+    const group=appData.groups.find(g=>g.id===groupId);
+    pool=group?appData.students.filter(s=>group.studentIds.includes(s.id)):[];
+  } else {
+    pool=appData.students.filter(s=>s.teacher===val);
+  }
+  return pool.filter(s=>document.getElementById('cb-'+s.id)?.checked).map(s=>s.id);
 }
 
 function updateClassBanner(){
   const ids=getSelectedStudentIds();
   const amt=classBuckAmt||(document.getElementById('class-other-row').classList.contains('hidden')?null:classOtherAmt);
-  const teacher=document.getElementById('class-teacher-select').value;
-  const all=appData.students.filter(s=>s.teacher===teacher).length;
+  const val=document.getElementById('class-teacher-select').value;
+  let allPool;
+  if(val.startsWith('group:')){
+    const groupId=val.replace('group:','');
+    const group=appData.groups.find(g=>g.id===groupId);
+    allPool=group?appData.students.filter(s=>group.studentIds.includes(s.id)):[];
+  } else {
+    allPool=appData.students.filter(s=>s.teacher===val);
+  }
+  const all=allPool.length;
   document.getElementById('select-all-cb').checked=ids.length>0&&ids.length===all;
   document.getElementById('selected-count').textContent=`${ids.length} student${ids.length!==1?'s':''} selected`;
   const banner=document.getElementById('class-confirm-banner');
@@ -674,7 +721,7 @@ function checkManagePW(){
   if(document.getElementById('manage-pw').value===adminPW){
     document.getElementById('manage-lock').classList.add('hidden');
     document.getElementById('manage-content').classList.remove('hidden');
-    renderRoster();renderStaffRoster();populateAll();
+    renderRoster();renderStaffRoster();renderGroups();populateAll();
   } else document.getElementById('manage-pw-error').classList.remove('hidden');
 }
 
@@ -793,6 +840,80 @@ function changePW(){
   document.getElementById('pw-toast').textContent='✓ Password updated!';
   document.getElementById('new-pw').value='';
   setTimeout(()=>document.getElementById('pw-toast').textContent='',3000);
+}
+
+let pendingGroupStudentIds=[];
+
+function searchGroupStudents(){
+  const q=document.getElementById('group-student-search').value.toLowerCase();
+  const container=document.getElementById('group-search-results');
+  if(!q){container.classList.add('hidden');return;}
+  const filtered=appData.students.filter(s=>!pendingGroupStudentIds.includes(s.id)&&(s.first+' '+s.last).toLowerCase().includes(q)).slice(0,10);
+  container.classList.remove('hidden');container.innerHTML='';
+  if(!filtered.length){container.innerHTML='<div style="padding:10px;font-size:13px;color:#666">No students found.</div>';return;}
+  filtered.forEach(s=>{
+    const div=document.createElement('div');div.className='search-item';
+    div.innerHTML=`<span><strong>${s.last}, ${s.first}</strong> <span style="font-size:12px;color:#666">Gr.${s.grade} - ${s.teacher}</span></span><span style="font-size:12px;color:#534AB7">+ Add</span>`;
+    div.onclick=()=>addStudentToGroup(s);
+    container.appendChild(div);
+  });
+}
+
+function addStudentToGroup(s){
+  if(pendingGroupStudentIds.includes(s.id))return;
+  pendingGroupStudentIds.push(s.id);
+  const container=document.getElementById('group-selected-students');
+  const chip=document.createElement('div');
+  chip.id='chip-'+s.id;
+  chip.style.cssText='display:inline-flex;align-items:center;gap:4px;background:#EEEDFE;color:#3C3489;border-radius:20px;padding:3px 10px;font-size:13px;';
+  chip.innerHTML=s.first+' '+s.last+' <span onclick="removeStudentFromGroup('+s.id+')" style="font-weight:bold;margin-left:2px;cursor:pointer">x</span>';
+  container.appendChild(chip);
+  document.getElementById('group-student-search').value='';
+  document.getElementById('group-search-results').classList.add('hidden');
+}
+
+function removeStudentFromGroup(id){
+  pendingGroupStudentIds=pendingGroupStudentIds.filter(x=>x!==id);
+  const chip=document.getElementById('chip-'+id);
+  if(chip)chip.remove();
+}
+
+async function saveGroup(){
+  const name=document.getElementById('new-group-name').value.trim();
+  if(!name){alert('Please enter a group name.');return;}
+  if(pendingGroupStudentIds.length===0){alert('Please add at least one student.');return;}
+  const group={name,createdBy:'',studentIds:pendingGroupStudentIds.join(',')};
+  let newId='grp_'+Date.now();
+  if(SCRIPT_URL){
+    try{const result=await api({action:'addGroup',...group});newId=result.id;}catch(e){}
+  }
+  appData.groups.push({id:newId,name,createdBy:'',studentIds:[...pendingGroupStudentIds]});
+  document.getElementById('new-group-name').value='';
+  document.getElementById('group-selected-students').innerHTML='';
+  pendingGroupStudentIds=[];
+  document.getElementById('group-toast').textContent='Group saved!';
+  setTimeout(()=>document.getElementById('group-toast').textContent='',3000);
+  renderGroups();populateClassTeachers();
+}
+
+function renderGroups(){
+  const container=document.getElementById('groups-list');
+  if(!container)return;
+  container.innerHTML='';
+  if(!appData.groups||!appData.groups.length){container.innerHTML='<p style="font-size:13px;color:#666">No groups yet.</p>';return;}
+  appData.groups.forEach(g=>{
+    const names=g.studentIds.map(id=>{const s=appData.students.find(x=>x.id===id);return s?s.first+' '+s.last:'Unknown';}).join(', ');
+    const row=document.createElement('div');row.className='student-row';row.style.cssText='flex-direction:column;align-items:flex-start;gap:4px;';
+    row.innerHTML='<div style="display:flex;justify-content:space-between;width:100%;align-items:center"><strong>'+g.name+'</strong><button class="btn sm danger" onclick="deleteGroup(''+g.id+'')"><i class="ti ti-trash"></i> Remove</button></div><p style="font-size:12px;color:#666">'+g.studentIds.length+' students: '+names+'</p>';
+    container.appendChild(row);
+  });
+}
+
+async function deleteGroup(id){
+  if(!confirm('Remove this group?'))return;
+  appData.groups=appData.groups.filter(g=>g.id!==id);
+  renderGroups();populateClassTeachers();
+  if(SCRIPT_URL)try{await api({action:'removeGroup',id});}catch(e){}
 }
 
 (function init(){
