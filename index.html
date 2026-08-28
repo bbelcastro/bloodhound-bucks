@@ -921,14 +921,14 @@ async function deleteGroup(id){
   document.getElementById('connect-card').classList.add('hidden');
   const savedPW=localStorage.getItem('jbb_admin_pw');
   if(savedPW)adminPW=savedPW;
-  appData={students:[],staff:[],ledger:[]};
+  appData={students:[],staff:[],ledger:[],groups:[]};
   populateAll();
   // Load from Google Sheets immediately
   (async function(){
     try{
       setStatus('loading');
       const data=await api({action:'getAll'});
-      appData=data;
+      appData={...data,groups:data.groups||[]};
       setStatus('connected');
       populateAll();
     }catch(e){
