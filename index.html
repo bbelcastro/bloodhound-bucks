@@ -866,7 +866,7 @@ function addStudentToGroup(s){
   const chip=document.createElement('div');
   chip.id='chip-'+s.id;
   chip.style.cssText='display:inline-flex;align-items:center;gap:4px;background:#EEEDFE;color:#3C3489;border-radius:20px;padding:3px 10px;font-size:13px;';
-  chip.innerHTML=s.first+' '+s.last+' <span onclick="removeStudentFromGroup('+s.id+')" style="font-weight:bold;margin-left:2px;cursor:pointer">x</span>';
+  chip.textContent='';const t=document.createTextNode(s.first+' '+s.last+' ');const x=document.createElement('span');x.textContent='x';x.style.cssText='font-weight:bold;margin-left:2px;cursor:pointer;';x.onclick=function(){removeStudentFromGroup(s.id);};chip.appendChild(t);chip.appendChild(x);
   container.appendChild(chip);
   document.getElementById('group-student-search').value='';
   document.getElementById('group-search-results').classList.add('hidden');
@@ -904,7 +904,7 @@ function renderGroups(){
   appData.groups.forEach(g=>{
     const names=g.studentIds.map(id=>{const s=appData.students.find(x=>x.id===id);return s?s.first+' '+s.last:'Unknown';}).join(', ');
     const row=document.createElement('div');row.className='student-row';row.style.cssText='flex-direction:column;align-items:flex-start;gap:4px;';
-    row.innerHTML='<div style="display:flex;justify-content:space-between;width:100%;align-items:center"><strong>'+g.name+'</strong><button class="btn sm danger" onclick="deleteGroup(''+g.id+'')"><i class="ti ti-trash"></i> Remove</button></div><p style="font-size:12px;color:#666">'+g.studentIds.length+' students: '+names+'</p>';
+    const topDiv=document.createElement('div');topDiv.style.cssText='display:flex;justify-content:space-between;width:100%;align-items:center;';const nameEl=document.createElement('strong');nameEl.textContent=g.name;const delBtn=document.createElement('button');delBtn.className='btn sm danger';delBtn.innerHTML='<i class="ti ti-trash"></i> Remove';delBtn.onclick=function(){deleteGroup(g.id);};topDiv.appendChild(nameEl);topDiv.appendChild(delBtn);const subEl=document.createElement('p');subEl.style.cssText='font-size:12px;color:#666;';subEl.textContent=g.studentIds.length+' students: '+names;row.appendChild(topDiv);row.appendChild(subEl);
     container.appendChild(row);
   });
 }
