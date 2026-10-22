@@ -280,7 +280,7 @@ input:focus,select:focus{outline:2px solid #7F77DD;outline-offset:1px}
           <div id="group-search-results" class="search-results hidden"></div>
         </div>
         <div id="group-selected-students" style="margin-bottom:12px;display:flex;flex-wrap:wrap;gap:6px;"></div>
-        <button class="btn primary" onclick="saveGroup()"><i class="ti ti-plus"></i> Save group</button>
+        <button id="save-group-btn" class="btn primary" onclick="saveGroup()"><i class="ti ti-plus"></i> Save group</button>
         <span id="group-toast" style="font-size:13px;color:green;margin-left:12px"></span>
         <div id="groups-list" style="margin-top:1rem"></div>
       </div>
@@ -851,6 +851,7 @@ function changePW(){
 }
 
 let pendingGroupStudentIds=[];
+let editingGroupId=null;
 
 function searchGroupStudents(){
   const q=document.getElementById('group-student-search').value.toLowerCase();
@@ -893,27 +894,95 @@ async function saveGroup(){
   const toastEl=document.getElementById('group-toast');
   toastEl.style.color='#666';toastEl.textContent='Saving…';
   const studentIdsStr=pendingGroupStudentIds.join(',');
-  let newId='grp_'+Date.now();
   let savedToSheet=false;
-  if(SCRIPT_URL){
-    try{
-      const result=await api({action:'addGroup',name:name,createdBy:'',studentIds:studentIdsStr});
-      if(result&&result.id){newId=result.id;savedToSheet=true;}
-      else{throw new Error('No id returned');}
-    }catch(e){
-      toastEl.style.color='#991f1f';
-      toastEl.textContent='⚠ Could not save to Google Sheets. Please check the Apps Script is redeployed and try again.';
-      return;
+  if(editingGroupId){
+    // UPDATE existing group
+    if(SCRIPT_URL){
+      try{
+        const result=await api({action:'updateGroup',id:editingGroupId,name:name,studentIds:studentIdsStr});
+        if(result&&result.success){savedToSheet=true;}
+        else{throw new Error('No success returned');}
+      }catch(e){
+        toastEl.style.color='#991f1f';
+        toastEl.textContent='⚠ Could not save to Google Sheets. Please check the Apps Script is redeployed and try again.';
+        return;
+      }
     }
+    const idx=appData.groups.findIndex(g=>g.id===editingGroupId);
+    if(idx!==-1){appData.groups[idx]={...appData.groups[idx],name,studentIds:[...pendingGroupStudentIds]};}
+    editingGroupId=null;
+    document.getElementById('save-group-btn').textContent='Save group';
+    const cancelBtn=document.getElementById('cancel-edit-group-btn');
+    if(cancelBtn)cancelBtn.style.display='none';
+    toastEl.style.color='green';
+    toastEl.textContent=savedToSheet?'✓ Group updated in Google Sheets!':'✓ Group updated locally (not connected).';
+  } else {
+    // ADD new group
+    let newId='grp_'+Date.now();
+    if(SCRIPT_URL){
+      try{
+        const result=await api({action:'addGroup',name:name,createdBy:'',studentIds:studentIdsStr});
+        if(result&&result.id){newId=result.id;savedToSheet=true;}
+        else{throw new Error('No id returned');}
+      }catch(e){
+        toastEl.style.color='#991f1f';
+        toastEl.textContent='⚠ Could not save to Google Sheets. Please check the Apps Script is redeployed and try again.';
+        return;
+      }
+    }
+    appData.groups.push({id:newId,name,createdBy:'',studentIds:[...pendingGroupStudentIds]});
+    toastEl.style.color='green';
+    toastEl.textContent=savedToSheet?'✓ Group saved to Google Sheets!':'✓ Group saved locally (not connected).';
   }
-  appData.groups.push({id:newId,name,createdBy:'',studentIds:[...pendingGroupStudentIds]});
   document.getElementById('new-group-name').value='';
   document.getElementById('group-selected-students').innerHTML='';
   pendingGroupStudentIds=[];
-  toastEl.style.color='green';
-  toastEl.textContent=savedToSheet?'✓ Group saved to Google Sheets!':'✓ Group saved locally (not connected).';
   setTimeout(()=>toastEl.textContent='',4000);
   renderGroups();populateClassTeachers();
+}
+
+function startEditGroup(id){
+  const g=appData.groups.find(x=>x.id===id);
+  if(!g)return;
+  editingGroupId=id;
+  document.getElementById('new-group-name').value=g.name;
+  pendingGroupStudentIds=[...g.studentIds];
+  const chipsEl=document.getElementById('group-selected-students');
+  chipsEl.innerHTML='';
+  g.studentIds.forEach(sid=>{
+    const s=appData.students.find(x=>x.id===sid);
+    if(!s)return;
+    const chip=document.createElement('span');
+    chip.id='chip-'+sid;chip.className='chip';
+    chip.innerHTML=(s.first+' '+s.last)+' <button onclick="removeStudentFromGroup(\''+sid+'\')" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0 2px;">✕</button>';
+    chipsEl.appendChild(chip);
+  });
+  document.getElementById('save-group-btn').textContent='Update group';
+  let cancelBtn=document.getElementById('cancel-edit-group-btn');
+  if(!cancelBtn){
+    cancelBtn=document.createElement('button');
+    cancelBtn.id='cancel-edit-group-btn';cancelBtn.className='btn sm';
+    cancelBtn.textContent='Cancel';cancelBtn.style.marginLeft='6px';
+    cancelBtn.onclick=cancelEditGroup;
+    document.getElementById('save-group-btn').insertAdjacentElement('afterend',cancelBtn);
+  }
+  cancelBtn.style.display='';
+  const toastEl=document.getElementById('group-toast');
+  toastEl.style.color='#666';toastEl.textContent='Editing "'+g.name+'" — make changes then click Update group.';
+  document.getElementById('new-group-name').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('new-group-name').focus();
+}
+
+function cancelEditGroup(){
+  editingGroupId=null;
+  document.getElementById('new-group-name').value='';
+  document.getElementById('group-selected-students').innerHTML='';
+  pendingGroupStudentIds=[];
+  document.getElementById('save-group-btn').textContent='Save group';
+  const cancelBtn=document.getElementById('cancel-edit-group-btn');
+  if(cancelBtn)cancelBtn.style.display='none';
+  const toastEl=document.getElementById('group-toast');
+  toastEl.textContent='';
 }
 
 function renderGroups(){
@@ -924,7 +993,7 @@ function renderGroups(){
   appData.groups.forEach(g=>{
     const names=g.studentIds.map(id=>{const s=appData.students.find(x=>x.id===id);return s?s.first+' '+s.last:'Unknown';}).join(', ');
     const row=document.createElement('div');row.className='student-row';row.style.cssText='flex-direction:column;align-items:flex-start;gap:4px;';
-    const topDiv=document.createElement('div');topDiv.style.cssText='display:flex;justify-content:space-between;width:100%;align-items:center;';const nameEl=document.createElement('strong');nameEl.textContent=g.name;const delBtn=document.createElement('button');delBtn.className='btn sm danger';delBtn.innerHTML='<i class="ti ti-trash"></i> Remove';delBtn.onclick=function(){deleteGroup(g.id);};topDiv.appendChild(nameEl);topDiv.appendChild(delBtn);const subEl=document.createElement('p');subEl.style.cssText='font-size:12px;color:#666;';subEl.textContent=g.studentIds.length+' students: '+names;row.appendChild(topDiv);row.appendChild(subEl);
+    const topDiv=document.createElement('div');topDiv.style.cssText='display:flex;justify-content:space-between;width:100%;align-items:center;';const nameEl=document.createElement('strong');nameEl.textContent=g.name;const btnGroup=document.createElement('div');btnGroup.style.cssText='display:flex;gap:6px;';const editBtn=document.createElement('button');editBtn.className='btn sm';editBtn.innerHTML='<i class="ti ti-pencil"></i> Edit';editBtn.onclick=function(){startEditGroup(g.id);};const delBtn=document.createElement('button');delBtn.className='btn sm danger';delBtn.innerHTML='<i class="ti ti-trash"></i> Remove';delBtn.onclick=function(){deleteGroup(g.id);};btnGroup.appendChild(editBtn);btnGroup.appendChild(delBtn);topDiv.appendChild(nameEl);topDiv.appendChild(btnGroup);const subEl=document.createElement('p');subEl.style.cssText='font-size:12px;color:#666;';subEl.textContent=g.studentIds.length+' students: '+names;row.appendChild(topDiv);row.appendChild(subEl);
     container.appendChild(row);
   });
 }
