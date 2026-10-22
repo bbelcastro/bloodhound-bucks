@@ -949,6 +949,8 @@ async function deleteGroup(id){
   document.getElementById('connect-card').classList.add('hidden');
   const savedPW=localStorage.getItem('jbb_admin_pw');
   if(savedPW)adminPW=savedPW;
+  // Clear any stale locally-stored groups from old app version
+  localStorage.removeItem('jbb_groups');
   appData={students:[],staff:[],ledger:[],groups:[]};
   populateAll();
   // Load from Google Sheets immediately
