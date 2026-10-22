@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -589,7 +588,16 @@ function loadClassRoster(){
 
 function toggleSelectAll(){
   const checked=document.getElementById('select-all-cb').checked;
-  appData.students.filter(s=>s.teacher===document.getElementById('class-teacher-select').value).forEach(s=>{const cb=document.getElementById('cb-'+s.id);if(cb)cb.checked=checked;});
+  const val=document.getElementById('class-teacher-select').value;
+  let pool;
+  if(val.startsWith('group:')){
+    const groupId=val.replace('group:','');
+    const group=appData.groups.find(g=>g.id===groupId);
+    pool=group?appData.students.filter(s=>group.studentIds.includes(s.id)):[];
+  } else {
+    pool=appData.students.filter(s=>s.teacher===val);
+  }
+  pool.forEach(s=>{const cb=document.getElementById('cb-'+s.id);if(cb)cb.checked=checked;});
   updateClassBanner();
 }
 
@@ -882,17 +890,29 @@ async function saveGroup(){
   const name=document.getElementById('new-group-name').value.trim();
   if(!name){alert('Please enter a group name.');return;}
   if(pendingGroupStudentIds.length===0){alert('Please add at least one student.');return;}
-  const group={name,createdBy:'',studentIds:pendingGroupStudentIds.join(',')};
+  const toastEl=document.getElementById('group-toast');
+  toastEl.style.color='#666';toastEl.textContent='Saving…';
+  const studentIdsStr=pendingGroupStudentIds.join(',');
   let newId='grp_'+Date.now();
+  let savedToSheet=false;
   if(SCRIPT_URL){
-    try{const result=await api({action:'addGroup',...group});newId=result.id;}catch(e){}
+    try{
+      const result=await api({action:'addGroup',name:name,createdBy:'',studentIds:studentIdsStr});
+      if(result&&result.id){newId=result.id;savedToSheet=true;}
+      else{throw new Error('No id returned');}
+    }catch(e){
+      toastEl.style.color='#991f1f';
+      toastEl.textContent='⚠ Could not save to Google Sheets. Please check the Apps Script is redeployed and try again.';
+      return;
+    }
   }
   appData.groups.push({id:newId,name,createdBy:'',studentIds:[...pendingGroupStudentIds]});
   document.getElementById('new-group-name').value='';
   document.getElementById('group-selected-students').innerHTML='';
   pendingGroupStudentIds=[];
-  document.getElementById('group-toast').textContent='Group saved!';
-  setTimeout(()=>document.getElementById('group-toast').textContent='',3000);
+  toastEl.style.color='green';
+  toastEl.textContent=savedToSheet?'✓ Group saved to Google Sheets!':'✓ Group saved locally (not connected).';
+  setTimeout(()=>toastEl.textContent='',4000);
   renderGroups();populateClassTeachers();
 }
 
@@ -913,7 +933,15 @@ async function deleteGroup(id){
   if(!confirm('Remove this group?'))return;
   appData.groups=appData.groups.filter(g=>g.id!==id);
   renderGroups();populateClassTeachers();
-  if(SCRIPT_URL)try{await api({action:'removeGroup',id});}catch(e){}
+  if(SCRIPT_URL){
+    try{await api({action:'removeGroup',id});}
+    catch(e){
+      const toastEl=document.getElementById('group-toast');
+      toastEl.style.color='#991f1f';
+      toastEl.textContent='⚠ Group removed from view but failed to delete from Sheet. Please refresh and try again.';
+      setTimeout(()=>toastEl.textContent='',5000);
+    }
+  }
 }
 
 (function init(){
